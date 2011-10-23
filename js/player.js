@@ -40,7 +40,7 @@ Player.UI.prototype._click = function(e) {
 
 Player.AI = OZ.Class().extend(Player);
 
-Player.UI.prototype.play = function(board, callback) {
+Player.AI.prototype.play = function(board, callback) {
 	var avail = [];
 	var w = board.getWidth();
 	var h = board.getHeight();
@@ -54,12 +54,4 @@ Player.UI.prototype.play = function(board, callback) {
 	
 	var value = avail[Math.floor(Math.random()*avail.length)];
 	setTimeout(function() { callback(value[0], value[1]); }, 0);
-}
-
-Player.UI.prototype._click = function(e) {
-	var x = e.data.x;
-	var y = e.data.y;
-	if (this._board.getPlayer(x, y) != this._id) { return; }
-	OZ.Event.remove(this._event);
-	this._callback(x, y);
 }
