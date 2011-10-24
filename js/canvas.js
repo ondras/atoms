@@ -28,9 +28,7 @@ Canvas.prototype.init = function(board, cellWidth, cellHeight) {
 	var canvas = OZ.DOM.elm("canvas", {width:width, height:height});
 	this._ctx = canvas.getContext("2d");
 	
-	
 	OZ.Event.add(canvas, "click", this._click.bind(this));
-	OZ.Event.add(canvas, "mousemove", this._mousemove.bind(this));
 }
 
 Canvas.prototype.prepare = function() {
@@ -53,6 +51,8 @@ Canvas.prototype.prepare = function() {
 
 	this._ctx.stroke();
 	this._ctx.restore();
+	
+	this._ctx.lineWidth = 1.5;
 }
 
 Canvas.prototype.definePlayerColor = function(player, color) {
@@ -69,8 +69,7 @@ Canvas.prototype.draw = function(x, y) {
 	var w = this._cellWidth;
 	var h = this._cellHeight;
 	this._ctx.clearRect(left, top, w, h);
-	
-	
+		
 	this._ctx.save();
 
 	var player = this._board.getPlayer(x, y);
@@ -101,11 +100,6 @@ Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 Canvas.prototype._click = function(e) {
 	var coords = this._eventToCoords(e)
 	this.dispatch("board-click", coords);
-}
-
-Canvas.prototype._mousemove = function(e) {
-	var coords = this._eventToCoords(e);
-	this.dispatch("board-mousemove", coords);
 }
 
 Canvas.prototype._eventToCoords = function(e) {

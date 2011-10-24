@@ -12,6 +12,8 @@ Board.prototype.init = function(width, height) {
 	this._height = height;
 	this._data = [];
 	this._criticals = [];
+	this._score = {};
+	
 	for (var i=0;i<width;i++) {
 		this._data.push([]);
 		for (var j=0;j<height;j++) {
@@ -25,6 +27,24 @@ Board.prototype.init = function(width, height) {
 			this._data[i].push(obj);
 		}
 	}
+}
+
+Board.prototype.clone = function() {
+	var clone = new this.constructor(this._width, this._height);
+	for (var i=0;i<this._width;i++) {
+		for (var j=0;j<this._height;j++) {
+			clone._data[i][j].atoms = this._data[i][j].atoms;
+			clone._data[i][j].player = this._data[i][j].player;
+		}
+	}
+	for (var i=0;i<this._criticals.length;i++) { clone.criticals.push(this._criticals[i]); }
+	for (var player in this._score) { clone._score[player] = this._score[player]; }
+	
+	return clone;
+}
+
+Board.prototype.getScore = function(player) {
+	return this._score[player] || 0;
 }
 
 Board.prototype.getWinner = function() {
@@ -60,8 +80,18 @@ Board.prototype.getAtoms = function(x, y) {
  */
 Board.prototype.setAtoms = function(x, y, atoms, player) {
 	var wasCritical = this.isCritical(x, y);
+	var wasPlayer = this.getPlayer(x, y);
 	this._data[x][y].atoms = atoms;
 	this._data[x][y].player = player;
+	
+	/* adjust scores */
+	if (wasPlayer != player) {
+		if (!(player in this._score)) { this._score[player] = 0; }
+		this._score[player]++;
+		if (wasPlayer) { this._score[wasPlayer]--; }
+	}
+	
+	/* adjust criticals */
 	var isCritical = this.isCritical(x, y);
 	if (isCritical == wasCritical) { return; }
 	
