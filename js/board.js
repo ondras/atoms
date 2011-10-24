@@ -36,7 +36,7 @@ Board.prototype.getWinner = function() {
 		}
 	}
 
-	return (players.length == 1 ? player[0] : null);
+	return (players.length == 1 ? players[0] : null);
 }
 
 Board.prototype.getWidth = function() { 

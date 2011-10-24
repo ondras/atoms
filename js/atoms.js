@@ -1,7 +1,7 @@
 var Atoms = OZ.Class();
 
 Atoms.prototype.init = function() {
-	this._board = new Board(6, 6);
+	this._board = new Board(3, 3);
 	this._canvas = new Canvas(this._board, 100, 100);
 	document.body.appendChild(this._canvas.getCanvas());
 	

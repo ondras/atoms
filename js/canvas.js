@@ -2,12 +2,15 @@ var Canvas = OZ.Class();
 
 Canvas.atoms = [
 	null,
-	[[.5, .5]],
+	[[.5,  .5]],
 	[[.25, .25], [.75, .75]],
-	[[.25, .25], [.5, .5], [.75, .75]],
+	[[.25, .25], [.5,  .5],  [.75, .75]],
 	[[.25, .25], [.25, .75], [.75, .75], [.75, .25]],
-	[[.25, .25], [.25, .75], [.5, .5], [.75, .75], [.75, .25]],
-	[[.25, .25], [.25, .5], [.25, .75], [.75, .25], [.75, .5], [.75, .75]]
+	[[.25, .25], [.25, .75], [.5,  .5],  [.75, .75], [.75, .25]],
+	[[.25, .25], [.25, .5],  [.25, .75], [.75, .25], [.75, .5],  [.75, .75]],
+	[[.25, .25], [.25, .5],  [.25, .75], [.5,  .5],  [.75, .25], [.75, .5],  [.75, .75]],
+	[[.25, .25], [.25, .5],  [.25, .75], [.5,  .25], [.5,  .75], [.75, .25], [.75, .5],  [.75, .75]],
+	[[.25, .25], [.25, .5],  [.25, .75], [.5,  .25], [.5,  .5],  [.5,  .75], [.75, .25], [.75, .5], [.75, .75]]
 ];
 
 Canvas.prototype.init = function(board, cellWidth, cellHeight) {
@@ -27,6 +30,7 @@ Canvas.prototype.init = function(board, cellWidth, cellHeight) {
 	
 	
 	OZ.Event.add(canvas, "click", this._click.bind(this));
+	OZ.Event.add(canvas, "mousemove", this._mousemove.bind(this));
 }
 
 Canvas.prototype.prepare = function() {
@@ -82,21 +86,33 @@ Canvas.prototype.draw = function(x, y) {
 
 	this._ctx.closePath();
 	this._ctx.fill();
+	this._ctx.stroke();
 	this._ctx.restore();
 }
 
 Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 	var x = left + w*position[0];
 	var y = top + h*position[1];
-	var r = 3;
+	var r = 0.1 * Math.min(this._cellWidth, this._cellHeight);
+	this._ctx.moveTo(x+r, y);
 	this._ctx.arc(x, y, r, 0, 2*Math.PI, false);
 }
 
 Canvas.prototype._click = function(e) {
+	var coords = this._eventToCoords(e)
+	this.dispatch("board-click", coords);
+}
+
+Canvas.prototype._mousemove = function(e) {
+	var coords = this._eventToCoords(e);
+	this.dispatch("board-mousemove", coords);
+}
+
+Canvas.prototype._eventToCoords = function(e) {
 	var pos = OZ.DOM.pos(this._ctx.canvas);
 	var x = e.clientX - pos[0];
 	var y = e.clientY - pos[1];
 	x = Math.floor(x/(this._cellWidth + 2*this._padding));
 	y = Math.floor(y/(this._cellHeight + 2*this._padding));
-	this.dispatch("board-click", {x:x, y:y});
+	return {x:x, y:y};
 }
