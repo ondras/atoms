@@ -199,6 +199,7 @@ Atoms.Multiplayer.prototype._announceWinner = function(winner) {
 }
 
 Atoms.Multiplayer.prototype._playerCallback = function(x, y) {
+	/* FIXME: zde neposlouchame socket, ale pritom to muze trvat dlouho (reakce) */
 	if (this._players[this._currentPlayer] instanceof Player.UI) {
 		var data = {
 			type: "round", 
