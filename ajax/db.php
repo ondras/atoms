@@ -68,7 +68,7 @@
 		 * Insert message for a client
 		 */
 		public function insertMessage($client, $message) {
-			$ts = microtime();
+			$ts = microtime(true);
 			$data = array("client"=>$client, "message"=>$message, "ts"=>$ts);
 			$this->insert(self::MESSAGE, $data);
 		}
