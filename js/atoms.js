@@ -1,6 +1,6 @@
 var Atoms = OZ.Class();
 Atoms.prototype.init = function() {
-	this._board = new Board(4, 4);
+	this._board = new Board(3, 3);
 	
 	this._players = [];
 	this._colors = ["blue", "red", "green", "yellow"];
@@ -83,7 +83,7 @@ Atoms.prototype._check = function() {
 	var winner = this._board.getWinner();
 	
 	if (winner > -1) {
-		alert("Winner is " + this._players[winner].getName());
+		this._announceWinner(winner);
 		return;
 	}
 	
@@ -93,6 +93,10 @@ Atoms.prototype._check = function() {
 	}
 	
 	this._loop();
+}
+
+Atoms.prototype._announceWinner = function(winner) {
+	alert("Winner is " + this._players[winner].getName());
 }
 
 Atoms.prototype._react = function() {
@@ -138,7 +142,6 @@ Atoms.Multiplayer = OZ.Class().extend(Atoms);
 Atoms.Multiplayer.URL = "ajax/";
 Atoms.Multiplayer.prototype.init = function(game, players, name) {
 	Atoms.prototype.init.call(this);
-	this._clientId = Math.random().toString().replace(".", "");
 	this._socket = null;
 	this._event = null;
 
@@ -146,13 +149,12 @@ Atoms.Multiplayer.prototype.init = function(game, players, name) {
 		game: game,
 		players: players,
 		name: name,
-		type: "setup",
-		client: this._clientId
-	}
+		type: "setup"
+	};
 }
 
 Atoms.Multiplayer.prototype.start = function() {
-	this._socket = new Socket(Atoms.Multiplayer.URL, this._createData);
+	this._socket = new Socket(Atoms.Multiplayer.URL).send(this._createData);
 	this._event = OZ.Event.add(this._socket, "message", this._message.bind(this));
 }
 
@@ -191,13 +193,19 @@ Atoms.Multiplayer.prototype._create = function(data) {
 	this._loop();
 }
 
+Atoms.Multiplayer.prototype._announceWinner = function(winner) {
+	if (this._players[winner] instanceof Player.UI) { this._socket.send({type:"close"}); }
+	Atoms.prototype._announceWinner.call(this, winner);
+}
+
 Atoms.Multiplayer.prototype._playerCallback = function(x, y) {
-	var data = {
-		type: "round", 
-		x: x,
-		y: y,
-		client: this._clientId
-	};
-	this._socket.send();
+	if (this._players[this._currentPlayer] instanceof Player.UI) {
+		var data = {
+			type: "round", 
+			x: x,
+			y: y
+		};
+		this._socket.send(data);
+	}
 	Atoms.prototype._playerCallback.call(this, x, y);
 }

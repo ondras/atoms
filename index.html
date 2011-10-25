@@ -6,7 +6,9 @@
 		<script src="js/canvas.js"></script>
 		<script src="js/board.js"></script>
 		<script src="js/player.js"></script>
+		<script src="js/socket.js"></script>
 		<link rel="stylesheet" type="text/css" href="style.css" />
 	</head>
-	<body onload="new Atoms.Local().start()"></body>
+<!--	<body onload="new Atoms.Local().start()"></body>-->
+		<body onload="new Atoms.Multiplayer('game', 2, 'ondra').start()"></body>
 </html>

@@ -76,7 +76,7 @@ Player.AI.prototype._simulate = function(board, x, y, max) {
 }
 
 /**/
-Player.Remote = OZ.Class();
+Player.Remote = OZ.Class().extend(Player);
 
 Player.Remote.prototype.init = function(number, name, socket) {
 	Player.prototype.init.call(this, number, name);
@@ -87,7 +87,7 @@ Player.Remote.prototype.init = function(number, name, socket) {
 
 Player.Remote.prototype.play = function(board, callback) {
 	this._callback = callback;
-	this._event = OZ.Event.addListener(this._socket, "message", this._message.bind(this));
+	this._event = OZ.Event.add(this._socket, "message", this._message.bind(this));
 }
 
 Player.Remote.prototype._message = function(e) {
