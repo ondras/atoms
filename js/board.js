@@ -1,18 +1,16 @@
 var Board = OZ.Class();
-
 Board.DIRS = [
 	[ 0,  1],
 	[ 0, -1],
 	[ 1,  0],
 	[-1,  0]
 ];
-
 Board.prototype.init = function(width, height) {
 	this._width = width;
 	this._height = height;
 	this._data = [];
 	this._criticals = [];
-	this._score = {};
+	this._score = [];
 	
 	for (var i=0;i<width;i++) {
 		this._data.push([]);
@@ -20,7 +18,7 @@ Board.prototype.init = function(width, height) {
 			var obj = {
 				atoms: 0,
 				threshold: 4,
-				player: null
+				player: -1
 			};
 			if (j==0 || j+1 == height) { obj.threshold--; }
 			if (i==0 || i+1 == width) { obj.threshold--; }
@@ -37,26 +35,22 @@ Board.prototype.clone = function() {
 			clone._data[i][j].player = this._data[i][j].player;
 		}
 	}
-	for (var i=0;i<this._criticals.length;i++) { clone.criticals.push(this._criticals[i]); }
-	for (var player in this._score) { clone._score[player] = this._score[player]; }
+	for (var i=0;i<this._criticals.length;i++) { clone._criticals.push(this._criticals[i]); }
+	for (var i=0;i<this._score.length;i++) { clone._score.push(this._score[i]); }
 	
 	return clone;
 }
 
 Board.prototype.getScore = function(player) {
-	return this._score[player] || 0;
+	return this._score[player];
 }
 
 Board.prototype.getWinner = function() {
-	var players = [];
-	for (var i=0;i<this._width;i++) {
-		for (var j=0;j<this._height;j++) {
-			var id = this.getPlayer(i, j);
-			if (players.indexOf(id) == -1) { players.push(id); }
-		}
+	var max = this._width * this._height;
+	for (var i=0;i<this._score.length;i++) {
+		if (this._score[i] == max) { return i; }
 	}
-
-	return (players.length == 1 ? players[0] : null);
+	return -1;
 }
 
 Board.prototype.getWidth = function() { 
@@ -86,9 +80,9 @@ Board.prototype.setAtoms = function(x, y, atoms, player) {
 	
 	/* adjust scores */
 	if (wasPlayer != player) {
-		if (!(player in this._score)) { this._score[player] = 0; }
+		if (!this._score[player]) { this._score[player] = 0; }
 		this._score[player]++;
-		if (wasPlayer) { this._score[wasPlayer]--; }
+		if (wasPlayer > -1) { this._score[wasPlayer]--; }
 	}
 	
 	/* adjust criticals */
@@ -127,6 +121,10 @@ Board.prototype.react = function() {
 	return results;
 }
 
+Board.prototype.isValid = function(x, y) {
+	return (x >= 0 && y >= 0 && x < this._width && y < this._height);
+}
+
 /**
  * Explode one field (must be critical!), record all changed fields in 'changed' object
  */
@@ -138,7 +136,7 @@ Board.prototype._reactOne = function(x, y, changed) {
 		var dir = Board.DIRS[i];
 		var xx = x + dir[0];
 		var yy = y + dir[1];
-		if (!this._isValid(xx, yy)) { continue; }
+		if (!this.isValid(xx, yy)) { continue; }
 		count++;
 		this.setAtoms(xx, yy, this.getAtoms(xx, yy)+1, player);
 		changed[xx+"-"+yy] = [xx, yy];
@@ -146,9 +144,5 @@ Board.prototype._reactOne = function(x, y, changed) {
 	
 	this.setAtoms(x, y, this.getAtoms(x, y) - count, player);
 	changed[x+"-"+y] = [x, y];
-}
-
-Board.prototype._isValid = function(x, y) {
-	return (x >= 0 && y >= 0 && x < this._width && y < this._height);
 }
 

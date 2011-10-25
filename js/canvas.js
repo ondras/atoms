@@ -1,5 +1,4 @@
 var Canvas = OZ.Class();
-
 Canvas.atoms = [
 	null,
 	[[.5,  .5]],
@@ -13,12 +12,13 @@ Canvas.atoms = [
 	[[.25, .25], [.25, .5],  [.25, .75], [.5,  .25], [.5,  .5],  [.5,  .75], [.75, .25], [.75, .5], [.75, .75]]
 ];
 
-Canvas.prototype.init = function(board, cellWidth, cellHeight) {
+Canvas.prototype.init = function(board, cellWidth, cellHeight, colors) {
 	this._board = board;
 	this._cellWidth = cellWidth;
 	this._cellHeight = cellHeight;
-	this._players = {};
+	this._colors = colors;
 	this._padding = 1;
+	this._hoverPlayer = -1;
 	
 	var bw = board.getWidth();
 	var bh = board.getHeight();
@@ -29,6 +29,9 @@ Canvas.prototype.init = function(board, cellWidth, cellHeight) {
 	this._ctx = canvas.getContext("2d");
 	
 	OZ.Event.add(canvas, "click", this._click.bind(this));
+	OZ.Event.add(canvas, "mousemove", this._mouse.bind(this));
+	OZ.Event.add(canvas, "mouseout", this._mouse.bind(this));
+	OZ.Event.add(canvas, "mouseover", this._mouse.bind(this));
 }
 
 Canvas.prototype.prepare = function() {
@@ -55,10 +58,6 @@ Canvas.prototype.prepare = function() {
 	this._ctx.lineWidth = 1.5;
 }
 
-Canvas.prototype.definePlayerColor = function(player, color) {
-	this._players[player] = color;
-}
-
 Canvas.prototype.getCanvas = function() {
 	return this._ctx.canvas;
 }
@@ -68,12 +67,14 @@ Canvas.prototype.draw = function(x, y) {
 	var top = y * (this._cellHeight + 2*this._padding) + 2*this._padding;
 	var w = this._cellWidth;
 	var h = this._cellHeight;
-	this._ctx.clearRect(left, top, w, h);
-		
+
 	this._ctx.save();
 
+	this._ctx.fillStyle = (this._board.isCritical(x, y) ? "yellow" : "white");
+	this._ctx.fillRect(left, top, w, h);
+		
 	var player = this._board.getPlayer(x, y);
-	this._ctx.fillStyle = this._players[player];
+	this._ctx.fillStyle = this._colors[player];
 
 	this._ctx.beginPath();
 
@@ -100,6 +101,22 @@ Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 Canvas.prototype._click = function(e) {
 	var coords = this._eventToCoords(e)
 	this.dispatch("board-click", coords);
+}
+
+Canvas.prototype._mouse = function(e) {
+	var coords = this._eventToCoords(e);
+	if (this._board.isValid(coords.x, coords.y)) { /* mousover, mousemove */
+		var player = this._board.getPlayer(coords.x, coords.y);
+		if (player == this._hoverPlayer) { return; }
+		
+		OZ.DOM.removeClass(this._ctx.canvas, "player-" + this._hoverPlayer);
+		this._hoverPlayer = player;
+		if (this._hoverPlayer > -1) { OZ.DOM.addClass(this._ctx.canvas, "player-" + this._hoverPlayer); }
+		
+	} else if (this._hoverPlayer != -1) { /* mouseout */
+		OZ.DOM.removeClass(this._ctx.canvas, "player-" + this._hoverPlayer);
+		this._hoverPlayer = -1;
+	}
 }
 
 Canvas.prototype._eventToCoords = function(e) {

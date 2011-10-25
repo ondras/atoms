@@ -1,0 +1,26 @@
+@font-face {
+	font-family: commo;
+	font-style: normal;
+	font-weight: normal;
+	src: url("commo.ttf") format("truetype");
+}
+
+body { 
+	text-align: center; 
+}
+
+h1 { 
+	font-family: commo; 
+}
+
+canvas { 
+	cursor: pointer;
+}
+
+canvas.player-0.current-1 {
+	cursor: default;
+}
+
+canvas.player-1.current-0 {
+	cursor: default;
+}
