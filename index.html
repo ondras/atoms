@@ -10,5 +10,45 @@
 		<script src="js/setup.js"></script>
 		<link rel="stylesheet" type="text/css" href="style.css" />
 	</head>
-	<body onload="new Setup()"></body>
+	<body onload="new Setup()">
+		<div id="setup">
+			<h1>Game setup</h1>
+			<div id="local">
+				<h2>Local play</h2>
+				<p>
+					Number of players: 
+					<select id="local-players">
+						<option value="2" selected="selected">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+					</select>
+				</p>
+				<div id="local-roster">
+					<p>
+						<span>1.</span>
+						<select>
+							<option value="ui">UI</option>
+							<option value="ai">AI</option>
+						</select>
+						Name: <input type="text" size="10" />
+					</p>
+				</div>
+				<p><input type="button" id="local-play" value="Play!" /></p>
+			</div>
+			<div id="multiplayer">
+				<h2>Multiplayer</h2>
+				<p>
+					Number of players: 
+					<select id="multiplayer-players">
+						<option value="2" selected="selected">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+					</select>
+				</p>
+				<p>Game name: <input type="text" size="10" id="multiplayer-game" /></p>
+				<p>Your name: <input type="text" size="10" id="multiplayer-name" /></p>
+				<p><input type="button" id="multiplayer-play" value="Play!" /></p>
+			</div>
+		</div>
+	</body>
 </html>
