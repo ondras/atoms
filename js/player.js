@@ -17,22 +17,48 @@ Player.UI.prototype.init = function(number, name) {
 	Player.prototype.init.call(this, number, name);
 	this._callback = null;
 	this._board = null;
-	this._event = null;
+	this._events = [];
+	this._canvas = null;
 }
 
 Player.UI.prototype.play = function(board, callback) {
 	this._board = board;
 	this._callback = callback;
-	this._event = OZ.Event.add(null, "board-click", this._click.bind(this));
+	this._events.push(OZ.Event.add(null, "board-click", this._click.bind(this)));
+	this._events.push(OZ.Event.add(null, "board-mouse", this._mouse.bind(this)));
+	if (this._canvas) { this._syncCursor(this._canvas); }
 }
 
 Player.UI.prototype._click = function(e) {
-	var x = e.data.x;
-	var y = e.data.y;
+	this._canvas = e.target;
+	var cursor = e.target.getCursor();
+	var x = cursor[0];
+	var y = cursor[1];
+	
+	if (!this._board.isValid(x, y)) { return; }
 	var player = this._board.getPlayer(x, y);
 	if (player > -1 && player != this._number) { return; }
-	OZ.Event.remove(this._event);
+
+	while (this._events.length) { OZ.Event.remove(this._events.pop()); }
+	this._canvas.getCanvas().style.cursor = "";
 	this._callback(x, y);
+}
+
+Player.UI.prototype._mouse = function(e) {
+	this._syncCursor(e.target);
+}
+
+Player.UI.prototype._syncCursor = function(canvas) {
+	this._canvas = canvas;
+	var cursor = canvas.getCursor();
+	var x = cursor[0];
+	var y = cursor[1];
+
+	if (!this._board.isValid(x, y)) { return; }
+	var player = this._board.getPlayer(x, y);
+	var canvas = canvas.getCanvas();
+	
+	canvas.style.cursor = (player > -1 && player != this._number ? "" : "pointer");
 }
 
 /**/

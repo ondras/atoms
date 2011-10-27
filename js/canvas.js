@@ -18,7 +18,7 @@ Canvas.prototype.init = function(board, cellWidth, cellHeight, colors) {
 	this._cellHeight = cellHeight;
 	this._colors = colors;
 	this._padding = 1;
-	this._hoverPlayer = -1;
+	this._cursor = [-1, -1];
 	
 	var bw = board.getWidth();
 	var bh = board.getHeight();
@@ -39,6 +39,9 @@ Canvas.prototype.prepare = function() {
 	var bh = this._board.getHeight();
 
 	this._ctx.save();
+	this._ctx.fillStyle = "white";
+	this._ctx.fillRect(0, 0, this._ctx.canvas.width, this._ctx.canvas.height);
+
 	this._ctx.lineWidth = 2;
 	this._ctx.beginPath();
 	
@@ -90,6 +93,10 @@ Canvas.prototype.draw = function(x, y) {
 	this._ctx.restore();
 }
 
+Canvas.prototype.getCursor = function() {
+	return this._cursor;
+}
+
 Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 	var x = left + w*position[0];
 	var y = top + h*position[1];
@@ -99,24 +106,12 @@ Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 }
 
 Canvas.prototype._click = function(e) {
-	var coords = this._eventToCoords(e)
-	this.dispatch("board-click", coords);
+	this.dispatch("board-click");
 }
 
 Canvas.prototype._mouse = function(e) {
-	var coords = this._eventToCoords(e);
-	if (this._board.isValid(coords.x, coords.y)) { /* mousover, mousemove */
-		var player = this._board.getPlayer(coords.x, coords.y);
-		if (player == this._hoverPlayer) { return; }
-		
-		OZ.DOM.removeClass(this._ctx.canvas, "player-" + this._hoverPlayer);
-		this._hoverPlayer = player;
-		if (this._hoverPlayer > -1) { OZ.DOM.addClass(this._ctx.canvas, "player-" + this._hoverPlayer); }
-		
-	} else if (this._hoverPlayer != -1) { /* mouseout */
-		OZ.DOM.removeClass(this._ctx.canvas, "player-" + this._hoverPlayer);
-		this._hoverPlayer = -1;
-	}
+	this._cursor = this._eventToCoords(e);
+	this.dispatch("board-mouse");
 }
 
 Canvas.prototype._eventToCoords = function(e) {
@@ -125,5 +120,5 @@ Canvas.prototype._eventToCoords = function(e) {
 	var y = e.clientY - pos[1];
 	x = Math.floor(x/(this._cellWidth + 2*this._padding));
 	y = Math.floor(y/(this._cellHeight + 2*this._padding));
-	return {x:x, y:y};
+	return [x, y];
 }

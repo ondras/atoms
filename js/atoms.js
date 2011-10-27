@@ -1,17 +1,16 @@
 var Atoms = OZ.Class();
 Atoms.prototype.init = function() {
-	this._board = new Board(3, 3);
+	this._board = new Board(5, 5);
 	
 	this._players = [];
 	this._colors = ["blue", "red", "green", "yellow"];
 	this._canvas = new Canvas(this._board, 80, 80, this._colors);
 	
-	this._currentName = OZ.DOM.elm("h1");
-	this._scoreContainer = OZ.DOM.elm("h1");
+	this._scoreContainer = OZ.DOM.elm("table", {id:"score", innerHTML:"<tbody><tr></tr><tr></tr></tbody>"});
 	this._scores = [];
+	this._names = [];
 	this._reactionDelay = 200;
 
-	document.body.appendChild(this._currentName);
 	document.body.appendChild(this._scoreContainer);
 	document.body.appendChild(this._canvas.getCanvas());
 
@@ -22,11 +21,20 @@ Atoms.prototype.init = function() {
 Atoms.prototype.start = function() {}
 
 Atoms.prototype._addPlayer = function(player) {
+	var tr1 = this._scoreContainer.getElementsByTagName("tr")[0];
+	var tr2 = this._scoreContainer.getElementsByTagName("tr")[1];
 	if (this._players.length) {
-		this._scoreContainer.appendChild(OZ.DOM.elm("span", {innerHTML:" : "}));
+		tr1.appendChild(OZ.DOM.elm("td", {innerHTML:":"}));
+		tr2.appendChild(OZ.DOM.elm("td", {innerHTML:":"}));
 	}
-	var score = OZ.DOM.elm("span", {innerHTML:"0", color:this._colors[this._players.length]});
-	this._scoreContainer.appendChild(score);
+
+	var color = this._colors[this._players.length];
+	var name = OZ.DOM.elm("td", {innerHTML:player.getName(), color:color});
+	var score = OZ.DOM.elm("td", {innerHTML:"0", color:color});
+
+	tr1.appendChild(name);
+	tr2.appendChild(score);
+	this._names.push(name);
 	this._scores.push(score);
 	
 	this._players.push(player);
@@ -35,18 +43,13 @@ Atoms.prototype._addPlayer = function(player) {
 
 Atoms.prototype._loop = function() {
 	this._updateScore();
+	if (this._currentPlayer > -1) { this._names[this._currentPlayer].style.textDecoration = ""; }
 
-	var canvas = this._canvas.getCanvas();
-	OZ.DOM.removeClass(canvas, "current-"+this._currentPlayer);
-	
 	do { /* find next playing player */
 		this._currentPlayer = (this._currentPlayer+1) % this._players.length;
 	} while (!this._players[this._currentPlayer]);
 
-	OZ.DOM.addClass(canvas, "current-"+this._currentPlayer);
-	
-	this._currentName.innerHTML = this._players[this._currentPlayer].getName();
-	this._currentName.style.color = this._colors[this._currentPlayer];
+	if (this._currentPlayer > -1) { this._names[this._currentPlayer].style.textDecoration = "underline"; }
 	this._players[this._currentPlayer].play(this._board, this._playerCallback.bind(this));
 }
 
@@ -96,7 +99,7 @@ Atoms.prototype._check = function() {
 }
 
 Atoms.prototype._announceWinner = function(winner) {
-	alert("Winner is " + this._players[winner].getName());
+	alert("Winner: " + this._players[winner].getName());
 }
 
 Atoms.prototype._react = function() {
@@ -110,12 +113,6 @@ Atoms.prototype._react = function() {
 /**/
 
 Atoms.Local = OZ.Class().extend(Atoms);
-Atoms.Local.prototype.init = function() {
-	Atoms.prototype.init.call(this);
-	this.addPlayerAI("A");
-	this.addPlayerAI("B");	
-	this.addPlayerAI("C");	
-}
 
 Atoms.Local.prototype.addPlayerUI = function(name) {
 	var player = new Player.UI(this._players.length, name);
@@ -144,6 +141,7 @@ Atoms.Multiplayer.prototype.init = function(game, players, name) {
 	Atoms.prototype.init.call(this);
 	this._socket = null;
 	this._event = null;
+	this._loading = OZ.DOM.elm("a", {href:"#", innerHTML:"Waiting for other players &hellip; click to abort"});
 
 	this._createData = {
 		game: game,
@@ -156,6 +154,12 @@ Atoms.Multiplayer.prototype.init = function(game, players, name) {
 Atoms.Multiplayer.prototype.start = function() {
 	this._socket = new Socket(Atoms.Multiplayer.URL).send(this._createData);
 	this._event = OZ.Event.add(this._socket, "message", this._message.bind(this));
+	
+	var p = OZ.DOM.elm("p", {id:"loading"});
+	p.appendChild(this._loading);
+	var sc = this._scoreContainer;
+	sc.parentNode.insertBefore(p, sc);
+	OZ.Event.add(this._loading, "click", this._abort.bind(this));
 }
 
 Atoms.Multiplayer.prototype._message = function(e) {
@@ -181,6 +185,7 @@ Atoms.Multiplayer.prototype._message = function(e) {
  * Create game based on server definition of players
  */
 Atoms.Multiplayer.prototype._create = function(data) {
+	this._loading.innerHTML = "Abort the game";
 	for (var i=0;i<data.names.length;i++) {
 		if (i == data.index) {
 			var player = new Player.UI(i, data.names[i]);
@@ -199,7 +204,7 @@ Atoms.Multiplayer.prototype._announceWinner = function(winner) {
 }
 
 Atoms.Multiplayer.prototype._playerCallback = function(x, y) {
-	/* FIXME: zde neposlouchame socket, ale pritom to muze trvat dlouho (reakce) */
+	/* FIXME: zde neposlouchame socket, ale pritom to muze trvat dlouho (reakce). Takze shutdown ?!? */
 	if (this._players[this._currentPlayer] instanceof Player.UI) {
 		var data = {
 			type: "round", 
@@ -209,4 +214,11 @@ Atoms.Multiplayer.prototype._playerCallback = function(x, y) {
 		this._socket.send(data);
 	}
 	Atoms.prototype._playerCallback.call(this, x, y);
+}
+
+Atoms.Multiplayer.prototype._abort = function(e) {
+	OZ.Event.prevent(e);
+	this._socket.send({type:"close"});
+	this._loading.parentNode.removeChild(this._loading);
+	setTimeout(function() { location.reload(); }, 500);
 }

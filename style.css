@@ -7,20 +7,45 @@
 
 body { 
 	text-align: center; 
+	background-color: #eee;
+	text-shadow: 0px 1px 1px white;
 }
 
-h1, h2 { 
+ol#rules {
+	text-align: left;
+}
+
+ol#rules li {
+	line-height: 150%;
+}
+
+h1, h2, #score { 
 	font-family: commo; 
 }
 
+a {	
+	font-weight: bold;
+	color: black;
+}
+
 canvas { 
-	cursor: pointer;
+	cursor: not-allowed;
 }
 
-canvas.player-0.current-1 {
-	cursor: default;
+p#loading {
+	margin: 1em;
 }
 
-canvas.player-1.current-0 {
-	cursor: default;
+#score {
+	margin: auto;
+	font-size: 150%;
+}
+
+#local, #multiplayer {
+	float: left;
+	width: 30%;
+	margin: 10% 10% 0 10%;
+	background-color: #ccc;
+	border-radius: 20px;
+	box-shadow: 0px 0px 3px black;
 }
