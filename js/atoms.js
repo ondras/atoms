@@ -1,6 +1,6 @@
 var Atoms = OZ.Class();
 Atoms.prototype.init = function() {
-	this._board = new Board(5, 5);
+	this._board = new Board(6, 6);
 	
 	this._players = [];
 	this._colors = ["blue", "red", "green", "yellow"];
