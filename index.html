@@ -7,8 +7,8 @@
 		<script src="js/canvas.js"></script>
 		<script src="js/board.js"></script>
 		<script src="js/player.js"></script>
-		<script src="js/socket.js"></script>
 		<script src="js/setup.js"></script>
+		<script src="js/setup.local.js"></script>
 		<link rel="stylesheet" type="text/css" href="style.css" />
 	</head>
 	<body onload="new Setup()">
@@ -39,6 +39,9 @@
 			</div>
 			<div id="multiplayer">
 				<h2>Multiplayer</h2>
+				<p>
+					<label>Server: <input type="text" size="20" id="multiplayer-url" /></label>
+				</p>
 				<p>
 					Number of players: 
 					<select id="multiplayer-players">

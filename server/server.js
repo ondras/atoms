@@ -1,5 +1,3 @@
-#!/usr/bin/env v8cgi
-
 var AS = function(ws) {
 	this._ws = ws;
 	this._games = {};
@@ -119,7 +117,4 @@ AS.prototype._clientToGameName = function(client) {
 	}
 }
 
-var Server = require("websocket").Server;
-var ws = new Server("0.0.0.0", 8888);
-ws.addApplication(new AS(ws));
-ws.run();
+exports.AS = AS;

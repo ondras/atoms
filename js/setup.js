@@ -1,11 +1,5 @@
-if (!window.localStorage) {
-	window.localStorage = {
-		getItem: function() { return null; },
-		setItem: function() {}
-	}
-}
-
 var Setup = OZ.Class();
+Setup.URL = "ws://" + location.hostname + ":8888/atoms";
 Setup.prototype.init = function() {
 	this._dom = {
 		container: OZ.$("setup"),
@@ -22,7 +16,8 @@ Setup.prototype.init = function() {
 			players: OZ.$("multiplayer-players"),
 			game: OZ.$("multiplayer-game"),
 			name: OZ.$("multiplayer-name"),
-			play: OZ.$("multiplayer-play")
+			play: OZ.$("multiplayer-play"),
+			url: OZ.$("multiplayer-url")
 		}
 	}
 	
@@ -56,9 +51,11 @@ Setup.prototype._load = function() {
 	var players = localStorage.getItem("multiplayer-players") || 2;
 	var game = localStorage.getItem("multiplayer-game") || ("game" + Math.round(100*Math.random()));
 	var name = localStorage.getItem("multiplayer-name") || ("Player" + Math.round(100*Math.random()));
+	var url = localStorage.getItem("multiplayer-url") || this.constructor.URL;
 	this._dom.multiplayer.players.value = players;
 	this._dom.multiplayer.game.value = game;
 	this._dom.multiplayer.name.value = name;
+	this._dom.multiplayer.url.value = url;
 }
 
 Setup.prototype._save = function() {
@@ -76,6 +73,7 @@ Setup.prototype._save = function() {
 	localStorage.setItem("multiplayer-players", this._dom.multiplayer.players.value);
 	localStorage.setItem("multiplayer-game", this._dom.multiplayer.game.value);
 	localStorage.setItem("multiplayer-name", this._dom.multiplayer.name.value);
+	localStorage.setItem("multiplayer-url", this._dom.multiplayer.url.value);
 }
 
 Setup.prototype._syncRoster = function() {
@@ -124,8 +122,9 @@ Setup.prototype._playMultiplayer = function() {
 	var game = this._dom.multiplayer.game.value;
 	var name = this._dom.multiplayer.name.value;
 	var players = parseInt(this._dom.multiplayer.players.value);
+	var url = this._dom.multiplayer.url.value;
 	
-	game = new Atoms.Multiplayer(game, players, name);
+	game = new Atoms.Multiplayer(game, players, name, url);
 	game.start();
 }
 

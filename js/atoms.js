@@ -1,6 +1,6 @@
 var Atoms = OZ.Class();
 Atoms.prototype.init = function() {
-	this._board = new Board(2, 2);
+	this._board = new Board(6, 6);
 	
 	this._players = [];
 	this._colors = ["blue", "red", "green", "yellow"];
@@ -136,13 +136,12 @@ Atoms.Local.prototype.start = function() {
 /**/
 
 Atoms.Multiplayer = OZ.Class().extend(Atoms);
-/* FIXME configurable */
-Atoms.Multiplayer.URL = "ws://localhost:8888/atoms";
-Atoms.Multiplayer.prototype.init = function(game, players, name) {
+Atoms.Multiplayer.prototype.init = function(game, players, name, url) {
 	Atoms.prototype.init.call(this);
-	this._socket = new (window.WebSocket || window.MozWebSocket)(this.constructor.URL);
+	this._socket = new (window.WebSocket || window.MozWebSocket)(url);
 	OZ.Event.add(this._socket, "message", this._message.bind(this));
 	OZ.Event.add(this._socket, "open", this._open.bind(this));
+	OZ.Event.add(this._socket, "error", this._error.bind(this));
 
 	this._loading = OZ.DOM.elm("a", {href:"#", innerHTML:"Waiting for other players &hellip; click to abort"});
 
@@ -151,6 +150,10 @@ Atoms.Multiplayer.prototype.init = function(game, players, name) {
 		players: players,
 		name: name
 	};
+}
+
+Atoms.Multiplayer.prototype._error = function(e) {
+	alert("Websocket communication error");
 }
 
 Atoms.Multiplayer.prototype._open = function() {
