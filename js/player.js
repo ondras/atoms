@@ -100,37 +100,3 @@ Player.AI.prototype._simulate = function(board, x, y, max) {
 	while (board.hasCriticals() && board.getScore(this._number) < max) { board.react(); }
 	return board.getScore(this._number);
 }
-
-/**/
-Player.Remote = OZ.Class().extend(Player);
-
-Player.Remote.prototype.init = function(number, name, socket) {
-	Player.prototype.init.call(this, number, name);
-	this._callback = null;
-	this._socket = socket;
-	this._event = null;
-}
-
-Player.Remote.prototype.play = function(board, callback) {
-	this._callback = callback;
-	this._event = OZ.Event.add(this._socket, "message", this._message.bind(this));
-}
-
-Player.Remote.prototype._message = function(e) {
-	OZ.Event.remove(this._event);
-
-	var data = JSON.parse(e.data);
-	switch (data.type) {
-		case "error":
-			alert(data.message);
-		break;
-		
-		case "round":
-			this._callback(data.x, data.y);	
-		break;
-		
-		default:
-			throw new Error("Unknown message type " + data.type);
-		break;
-	}
-}

@@ -1,6 +1,6 @@
 var Atoms = OZ.Class();
 Atoms.prototype.init = function() {
-	this._board = new Board(6, 6);
+	this._board = new Board(2, 2);
 	
 	this._players = [];
 	this._colors = ["blue", "red", "green", "yellow"];
@@ -136,24 +136,25 @@ Atoms.Local.prototype.start = function() {
 /**/
 
 Atoms.Multiplayer = OZ.Class().extend(Atoms);
-Atoms.Multiplayer.URL = "ajax/";
+/* FIXME configurable */
+Atoms.Multiplayer.URL = "ws://localhost:8888/atoms";
 Atoms.Multiplayer.prototype.init = function(game, players, name) {
 	Atoms.prototype.init.call(this);
-	this._socket = null;
-	this._event = null;
+	this._socket = new (window.WebSocket || window.MozWebSocket)(this.constructor.URL);
+	OZ.Event.add(this._socket, "message", this._message.bind(this));
+	OZ.Event.add(this._socket, "open", this._open.bind(this));
+
 	this._loading = OZ.DOM.elm("a", {href:"#", innerHTML:"Waiting for other players &hellip; click to abort"});
 
 	this._createData = {
 		game: game,
 		players: players,
-		name: name,
-		type: "setup"
+		name: name
 	};
 }
 
-Atoms.Multiplayer.prototype.start = function() {
-	this._socket = new Socket(Atoms.Multiplayer.URL).send(this._createData);
-	this._event = OZ.Event.add(this._socket, "message", this._message.bind(this));
+Atoms.Multiplayer.prototype._open = function() {
+	this._send("join", this._createData);
 	
 	var p = OZ.DOM.elm("p", {id:"loading"});
 	p.appendChild(this._loading);
@@ -162,17 +163,25 @@ Atoms.Multiplayer.prototype.start = function() {
 	OZ.Event.add(this._loading, "click", this._abort.bind(this));
 }
 
+Atoms.Multiplayer.prototype._send = function(type, data) {
+	data.type = type;
+	this._socket.send(JSON.stringify(data));
+}
+
 Atoms.Multiplayer.prototype._message = function(e) {
-	OZ.Event.remove(this._event);
 	var data = JSON.parse(e.data);
 	
 	switch (data.type) {
 		case "error":
-			alert(data.message);
+			alert(data.error);
 		break;
 		
 		case "create":
 			this._create(data);
+		break;
+		
+		case "round":
+			this._playerCallback(data.x, data.y);
 		break;
 		
 		default:
@@ -186,39 +195,31 @@ Atoms.Multiplayer.prototype._message = function(e) {
  */
 Atoms.Multiplayer.prototype._create = function(data) {
 	this._loading.innerHTML = "Abort the game";
-	for (var i=0;i<data.names.length;i++) {
-		if (i == data.index) {
-			var player = new Player.UI(i, data.names[i]);
+	var i=0;
+	for (var name in data.players) {
+		if (name == this._createData.name) {
+			var player = new Player.UI(i, name);
 		} else {
-			var player = new Player.Remote(i, data.names[i], this._socket);
+			var player = new Player(i, name);
 		}
 		this._addPlayer(player);
+		i++;
 	}
 	
 	this._loop();
 }
 
-Atoms.Multiplayer.prototype._announceWinner = function(winner) {
-	if (this._players[winner] instanceof Player.UI) { this._socket.send({type:"close"}); }
-	Atoms.prototype._announceWinner.call(this, winner);
-}
-
 Atoms.Multiplayer.prototype._playerCallback = function(x, y) {
-	/* FIXME: zde neposlouchame socket, ale pritom to muze trvat dlouho (reakce). Takze shutdown ?!? */
 	if (this._players[this._currentPlayer] instanceof Player.UI) {
 		var data = {
-			type: "round", 
 			x: x,
 			y: y
 		};
-		this._socket.send(data);
+		this._send("round", data);
 	}
 	Atoms.prototype._playerCallback.call(this, x, y);
 }
 
 Atoms.Multiplayer.prototype._abort = function(e) {
-	OZ.Event.prevent(e);
-	this._socket.send({type:"close"});
-	this._loading.parentNode.removeChild(this._loading);
-	setTimeout(function() { location.reload(); }, 500);
+	location.reload();
 }
