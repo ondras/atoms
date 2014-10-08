@@ -1,4 +1,23 @@
-var Canvas = OZ.Class();
+var Canvas = function(board, cellWidth, cellHeight, colors) {
+	this._board = board;
+	this._cellWidth = cellWidth;
+	this._cellHeight = cellHeight;
+	this._colors = colors;
+	this._criticalColor = "yellow";
+	this._padding = 1;
+	this._cursor = [-1, -1];
+	
+	var canvas = document.createElement("canvas");
+	canvas.width = board.getWidth() * (cellWidth + 2*this._padding) + 2*this._padding;
+	canvas.height = board.getHeight() * (cellHeight + 2*this._padding) + 2*this._padding;
+	this._ctx = canvas.getContext("2d");
+
+	canvas.addEventListener("click", this);
+	canvas.addEventListener("mouseover", this);
+	canvas.addEventListener("mouseout", this);
+	canvas.addEventListener("mousemove", this);
+}
+
 Canvas.atoms = [
 	null,
 	[[.5,  .5]],
@@ -11,28 +30,6 @@ Canvas.atoms = [
 	[[.25, .25], [.25, .5],  [.25, .75], [.5,  .25], [.5,  .75], [.75, .25], [.75, .5],  [.75, .75]],
 	[[.25, .25], [.25, .5],  [.25, .75], [.5,  .25], [.5,  .5],  [.5,  .75], [.75, .25], [.75, .5], [.75, .75]]
 ];
-
-Canvas.prototype.init = function(board, cellWidth, cellHeight, colors) {
-	this._board = board;
-	this._cellWidth = cellWidth;
-	this._cellHeight = cellHeight;
-	this._colors = colors;
-	this._padding = 1;
-	this._cursor = [-1, -1];
-	
-	var bw = board.getWidth();
-	var bh = board.getHeight();
-	var width = bw * (cellWidth + 2*this._padding) + 2*this._padding;
-	var height = bh * (cellHeight + 2*this._padding) + 2*this._padding;
-	
-	var canvas = OZ.DOM.elm("canvas", {width:width, height:height});
-	this._ctx = canvas.getContext("2d");
-	
-	OZ.Event.add(canvas, "click", this._click.bind(this));
-	OZ.Event.add(canvas, "mousemove", this._mouse.bind(this));
-	OZ.Event.add(canvas, "mouseout", this._mouse.bind(this));
-	OZ.Event.add(canvas, "mouseover", this._mouse.bind(this));
-}
 
 Canvas.prototype.prepare = function() {
 	var bw = this._board.getWidth();
@@ -65,23 +62,23 @@ Canvas.prototype.getCanvas = function() {
 	return this._ctx.canvas;
 }
 
-Canvas.prototype.draw = function(x, y) {
-	var left = x * (this._cellWidth + 2*this._padding) + 2*this._padding;
-	var top = y * (this._cellHeight + 2*this._padding) + 2*this._padding;
+Canvas.prototype.draw = function(xy) {
+	var left = xy.x * (this._cellWidth + 2*this._padding) + 2*this._padding;
+	var top = xy.y * (this._cellHeight + 2*this._padding) + 2*this._padding;
 	var w = this._cellWidth;
 	var h = this._cellHeight;
 
 	this._ctx.save();
 
-	this._ctx.fillStyle = (this._board.isCritical(x, y) ? "yellow" : "white");
+	this._ctx.fillStyle = (this._board.isCritical(xy) ? this._criticalColor : "white");
 	this._ctx.fillRect(left, top, w, h);
 		
-	var player = this._board.getPlayer(x, y);
+	var player = this._board.getPlayer(xy);
 	this._ctx.fillStyle = this._colors[player];
 
 	this._ctx.beginPath();
 
-	var atoms = this._board.getAtoms(x, y);
+	var atoms = this._board.getAtoms(xy);
 	var positions = Canvas.atoms[atoms];
 	for (var i=0;i<positions.length;i++) {
 		this._drawAtom(left, top, w, h, positions[i]);
@@ -97,6 +94,19 @@ Canvas.prototype.getCursor = function() {
 	return this._cursor;
 }
 
+Canvas.prototype.handleEvent = function(e) {
+	switch (e.type) {
+		case "click":
+			publish("board-click", this);
+		break;
+
+		default:
+			this._cursor = this._eventToCoords(e);
+			publish("board-mouse", this);
+		break;
+	}
+}
+
 Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 	var x = left + w*position[0];
 	var y = top + h*position[1];
@@ -105,20 +115,11 @@ Canvas.prototype._drawAtom = function(left, top, w, h, position) {
 	this._ctx.arc(x, y, r, 0, 2*Math.PI, false);
 }
 
-Canvas.prototype._click = function(e) {
-	this.dispatch("board-click");
-}
-
-Canvas.prototype._mouse = function(e) {
-	this._cursor = this._eventToCoords(e);
-	this.dispatch("board-mouse");
-}
-
 Canvas.prototype._eventToCoords = function(e) {
-	var pos = OZ.DOM.pos(this._ctx.canvas);
-	var x = e.clientX - pos[0];
-	var y = e.clientY - pos[1];
+	var rect = this._ctx.canvas.getBoundingClientRect();
+	var x = e.clientX - rect.left;
+	var y = e.clientY - rect.top;
 	x = Math.floor(x/(this._cellWidth + 2*this._padding));
 	y = Math.floor(y/(this._cellHeight + 2*this._padding));
-	return [x, y];
+	return new XY(x, y);
 }

@@ -1,23 +1,20 @@
-var Setup = OZ.Class();
-Setup.URL = "ws://" + location.hostname + ":8888/atoms";
-Setup.prototype.init = function() {
+var Setup = function() {
 	this._dom = {
-		container: OZ.$("setup"),
+		container: document.querySelector("#setup"),
 		local: {
-			container: OZ.$("local"),	
-			players: OZ.$("local-players"),	
-			roster: OZ.$("local-roster"),
-			play: OZ.$("local-play"),
+			container: document.querySelector("#local"),	
+			players: document.querySelector("#local-players"),	
+			roster: document.querySelector("#local-roster"),
+			play: document.querySelector("#local-play"),
 			template: null,
 			rosterItems: []
 		},
 		multiplayer: {
-			container: OZ.$("multiplayer"),
-			players: OZ.$("multiplayer-players"),
-			game: OZ.$("multiplayer-game"),
-			name: OZ.$("multiplayer-name"),
-			play: OZ.$("multiplayer-play"),
-			url: OZ.$("multiplayer-url")
+			container: document.querySelector("#multiplayer"),
+			players: document.querySelector("#multiplayer-players"),
+			game: document.querySelector("#multiplayer-game"),
+			name: document.querySelector("#multiplayer-name"),
+			play: document.querySelector("#multiplayer-play")
 		}
 	}
 	
@@ -27,11 +24,11 @@ Setup.prototype.init = function() {
 }
 
 Setup.prototype._setupLocal = function() {
-	this._dom.local.template = this._dom.local.roster.getElementsByTagName("p")[0];
+	this._dom.local.template = this._dom.local.roster.querySelectorAll("p")[0];
 	this._dom.local.template.parentNode.removeChild(this._dom.local.template);
 	
-	OZ.Event.add(this._dom.local.play, "click", this._playLocal.bind(this));
-	OZ.Event.add(this._dom.local.players, "change", this._syncRoster.bind(this));
+	this._dom.local.play.addEventListener("click", this._playLocal.bind(this));
+	this._dom.local.players.addEventListener("change", this._syncRoster.bind(this));
 }
 
 Setup.prototype._load = function() {
@@ -44,18 +41,16 @@ Setup.prototype._load = function() {
 		var type = localStorage.getItem("local-"+i+"-type") || "ui";
 		var name = localStorage.getItem("local-"+i+"-name") || ("Player" + Math.round(100*Math.random()));
 		
-		item.getElementsByTagName("input")[0].value = name;
-		item.getElementsByTagName("select")[0].value = type;
+		item.querySelectorAll("input")[0].value = name;
+		item.querySelectorAll("select")[0].value = type;
 	}
 
 	var players = localStorage.getItem("multiplayer-players") || 2;
 	var game = localStorage.getItem("multiplayer-game") || ("game" + Math.round(100*Math.random()));
 	var name = localStorage.getItem("multiplayer-name") || ("Player" + Math.round(100*Math.random()));
-	var url = this.constructor.URL;
 	this._dom.multiplayer.players.value = players;
 	this._dom.multiplayer.game.value = game;
 	this._dom.multiplayer.name.value = name;
-	this._dom.multiplayer.url.value = url;
 }
 
 Setup.prototype._save = function() {
@@ -63,8 +58,8 @@ Setup.prototype._save = function() {
 	localStorage.setItem("local-players", this._dom.local.players.value);
 	for (var i=0;i<this._dom.local.rosterItems.length;i++) {
 		var item = this._dom.local.rosterItems[i];
-		var name = item.getElementsByTagName("input")[0].value;
-		var type = item.getElementsByTagName("select")[0].value;
+		var name = item.querySelectorAll("input")[0].value;
+		var type = item.querySelectorAll("select")[0].value;
 		localStorage.setItem("local-"+i+"-type", type);
 		localStorage.setItem("local-"+i+"-name", name);
 	}
@@ -73,7 +68,6 @@ Setup.prototype._save = function() {
 	localStorage.setItem("multiplayer-players", this._dom.multiplayer.players.value);
 	localStorage.setItem("multiplayer-game", this._dom.multiplayer.game.value);
 	localStorage.setItem("multiplayer-name", this._dom.multiplayer.name.value);
-	localStorage.setItem("multiplayer-url", this._dom.multiplayer.url.value);
 }
 
 Setup.prototype._syncRoster = function() {
@@ -81,7 +75,7 @@ Setup.prototype._syncRoster = function() {
 
 	while (this._dom.local.rosterItems.length < players) {
 		var item = this._dom.local.template.cloneNode(true);
-		var span = item.getElementsByTagName("span")[0];
+		var span = item.querySelectorAll("span")[0];
 		this._dom.local.rosterItems.push(item);
 		span.innerHTML = this._dom.local.rosterItems.length + ".";
 		this._dom.local.roster.appendChild(item);
@@ -95,7 +89,7 @@ Setup.prototype._syncRoster = function() {
 }
 
 Setup.prototype._setupMultiplayer = function() {
-	OZ.Event.add(this._dom.multiplayer.play, "click", this._playMultiplayer.bind(this));
+	this._dom.multiplayer.play.addEventListener("click", this._playMultiplayer.bind(this));
 }
 
 Setup.prototype._playLocal = function() {
@@ -104,8 +98,8 @@ Setup.prototype._playLocal = function() {
 
 	for (var i=0;i<this._dom.local.rosterItems.length;i++) {
 		var item = this._dom.local.rosterItems[i];
-		var name = item.getElementsByTagName("input")[0].value || "[noname]";
-		var type = item.getElementsByTagName("select")[0].value;
+		var name = item.querySelectorAll("input")[0].value || "[noname]";
+		var type = item.querySelectorAll("select")[0].value;
 		if (type == "ui") {
 			game.addPlayerUI(name);
 		} else {
@@ -122,9 +116,8 @@ Setup.prototype._playMultiplayer = function() {
 	var game = this._dom.multiplayer.game.value;
 	var name = this._dom.multiplayer.name.value;
 	var players = parseInt(this._dom.multiplayer.players.value);
-	var url = this._dom.multiplayer.url.value;
 	
-	game = new Atoms.Multiplayer(game, players, name, url);
+	game = new Atoms.Multiplayer(game, players, name);
 	game.start();
 }
 

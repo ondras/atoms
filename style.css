@@ -32,20 +32,26 @@ canvas {
 	cursor: not-allowed;
 }
 
-p#loading {
-	margin: 1em;
-}
-
 #score {
 	margin: auto;
 	font-size: 150%;
 }
 
 #local, #multiplayer {
+	position: relative;
 	float: left;
 	width: 30%;
+	min-width: 300px;
 	margin: 50px 10% 0 10%;
 	background-color: #ccc;
 	border-radius: 20px;
 	box-shadow: 0px 0px 3px black;
+}
+
+#multiplayer::after {
+	content: url(firebase.png);
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: rotate(-90deg) translate(0, -100%);
 }

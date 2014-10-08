@@ -1,11 +1,4 @@
-var Board = OZ.Class();
-Board.DIRS = [
-	[ 0,  1],
-	[ 0, -1],
-	[ 1,  0],
-	[-1,  0]
-];
-Board.prototype.init = function(width, height) {
+var Board = function(width, height) {
 	this._width = width;
 	this._height = height;
 	this._data = [];
@@ -27,6 +20,13 @@ Board.prototype.init = function(width, height) {
 	}
 }
 
+Board.DIRS = [
+	[ 0,  1],
+	[ 0, -1],
+	[ 1,  0],
+	[-1,  0]
+];
+
 Board.prototype.clone = function() {
 	var clone = new this.constructor(this._width, this._height);
 	for (var i=0;i<this._width;i++) {
@@ -35,9 +35,8 @@ Board.prototype.clone = function() {
 			clone._data[i][j].player = this._data[i][j].player;
 		}
 	}
-	for (var i=0;i<this._criticals.length;i++) { clone._criticals.push(this._criticals[i]); }
-	for (var i=0;i<this._score.length;i++) { clone._score.push(this._score[i]); }
-	
+	clone._criticals = this._criticals.slice();
+	clone._score = this._score.slice();
 	return clone;
 }
 
@@ -61,22 +60,22 @@ Board.prototype.getHeight = function() {
 	return this._height;
 }
 
-Board.prototype.getPlayer = function(x, y) {
-	return this._data[x][y].player;
+Board.prototype.getPlayer = function(xy) {
+	return this._data[xy.x][xy.y].player;
 }
 
-Board.prototype.getAtoms = function(x, y) {
-	return this._data[x][y].atoms;
+Board.prototype.getAtoms = function(xy) {
+	return this._data[xy.x][xy.y].atoms;
 }
 
 /**
  * @returns {bool} is critical?
  */
-Board.prototype.setAtoms = function(x, y, atoms, player) {
-	var wasCritical = this.isCritical(x, y);
-	var wasPlayer = this.getPlayer(x, y);
-	this._data[x][y].atoms = atoms;
-	this._data[x][y].player = player;
+Board.prototype.setAtoms = function(xy, atoms, player) {
+	var wasCritical = this.isCritical(xy);
+	var wasPlayer = this.getPlayer(xy);
+	this._data[xy.x][xy.y].atoms = atoms;
+	this._data[xy.x][xy.y].player = player;
 	
 	/* adjust scores */
 	if (wasPlayer != player) {
@@ -86,63 +85,51 @@ Board.prototype.setAtoms = function(x, y, atoms, player) {
 	}
 	
 	/* adjust criticals */
-	var isCritical = this.isCritical(x, y);
+	var isCritical = this.isCritical(xy);
 	if (isCritical == wasCritical) { return; }
 	
 	if (isCritical) { 
-		this._criticals[x+"-"+y] = [x, y];
-	} else {
-		delete this._criticals[x+"-"+y];
+		this._criticals.push(xy);
+	} else if (wasCritical) {
+		this._criticals = this._criticals.filter(function(critical) {
+			return !critical.is(xy);
+		});
 	}	
 }
 
 Board.prototype.hasCriticals = function() {
-	for (var p in this._criticals) { return true; }
-	return false;
+	return (this._criticals.length > 0);
 }
 
-Board.prototype.isCritical = function(x, y) {
-	return this._data[x][y].atoms > this._data[x][y].threshold;
+Board.prototype.isCritical = function(xy) {
+	return this._data[xy.x][xy.y].atoms > this._data[xy.x][xy.y].threshold;
 }
 
 Board.prototype.react = function() {
-	var todo = [];
-	var changed = {};
-	for (var p in this._criticals) { todo.push(this._criticals[p]); }
-	if (!todo.length) { return []; }
-	
-	while (todo.length) {
-		var coords = todo.pop();
-		this._reactOne(coords[0], coords[1], changed);
-	}
-	
-	var results = [];
-	for (var p in changed) { results.push(changed[p]); }
-	return results;
-}
+	var changed = [];
 
-Board.prototype.isValid = function(x, y) {
-	return (x >= 0 && y >= 0 && x < this._width && y < this._height);
-}
+	if (!this._criticals.length) { return changed; }
 
-/**
- * Explode one field (must be critical!), record all changed fields in 'changed' object
- */
-Board.prototype._reactOne = function(x, y, changed) {
-	var player = this.getPlayer(x, y);
+	var explode = this._criticals[0];
+
+	var player = this.getPlayer(explode);
 	var count = 0;
 
 	for (var i=0;i<Board.DIRS.length;i++) {
 		var dir = Board.DIRS[i];
-		var xx = x + dir[0];
-		var yy = y + dir[1];
-		if (!this.isValid(xx, yy)) { continue; }
+		var xy = explode.plus(new XY(dir[0], dir[1]));
+		if (!this.isValid(xy)) { continue; }
 		count++;
-		this.setAtoms(xx, yy, this.getAtoms(xx, yy)+1, player);
-		changed[xx+"-"+yy] = [xx, yy];
+		this.setAtoms(xy, this.getAtoms(xy)+1, player);
+		changed.push(xy);
 	}
 	
-	this.setAtoms(x, y, this.getAtoms(x, y) - count, player);
-	changed[x+"-"+y] = [x, y];
+	this.setAtoms(explode, this.getAtoms(explode) - count, player);
+	changed.push(explode);
+
+	return changed;
 }
 
+Board.prototype.isValid = function(xy) {
+	return (xy.x >= 0 && xy.y >= 0 && xy.x < this._width && xy.y < this._height);
+}
