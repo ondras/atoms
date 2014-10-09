@@ -6,13 +6,16 @@
 }
 
 body { 
+	font-family: sans-serif;
 	text-align: center; 
-	background-color: #eee;
-	text-shadow: 0px 1px 1px white;
+	background-image: url(bg10.png);
 }
 
 ol#rules {
 	text-align: left;
+	background-color: rgba(255, 255, 255, 0.5);
+	padding-top: 1em;
+	padding-bottom: 1em;
 }
 
 ol#rules li {
@@ -23,13 +26,25 @@ h1, h2, #score {
 	font-family: commo; 
 }
 
-a {	
+a {
 	font-weight: bold;
 	color: black;
 }
 
-canvas { 
+canvas {
 	cursor: not-allowed;
+	max-width: 100%;
+}
+
+button, select, input {
+	font-size: 120%;
+}
+
+footer {
+	clear: both;
+	padding-top: 10em;
+	font-size: 80%;
+	text-align: center;
 }
 
 #score {
@@ -37,21 +52,43 @@ canvas {
 	font-size: 150%;
 }
 
-#local, #multiplayer {
+#setup > div {
 	position: relative;
-	float: left;
-	width: 30%;
-	min-width: 300px;
-	margin: 50px 10% 0 10%;
-	background-color: #ccc;
+	width: 40%;
 	border-radius: 20px;
-	box-shadow: 0px 0px 3px black;
+	border-style: solid;
+	border-width: 3px;
+	margin: 1em 0;
+
+}
+
+#setup #local {
+	float: left;
+	margin-left: 5%;
+	border-color: rgb(150, 150, 250);
+	background-color: rgba(150, 150, 250, 0.5);
+}
+
+#setup #multiplayer {
+	float: right;
+	margin-right: 5%;
+	border-color: rgb(250, 150, 150);
+	background-color: rgba(250, 150, 150, 0.5);
 }
 
 #multiplayer::after {
-	content: url(firebase.png);
+	content: url(firebase2.svg);
+	width: 180px;
 	position: absolute;
-	left: 0;
+	left: -50px;
 	top: 50%;
-	transform: rotate(-90deg) translate(0, -100%);
+	transform: rotate(-90deg);
+}
+
+@media all and (max-width: 800px) {
+	#setup > div {
+		float: none;
+		width: 90%;
+		margin: 1em auto;
+	}
 }

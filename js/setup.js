@@ -124,4 +124,5 @@ Setup.prototype._playMultiplayer = function() {
 Setup.prototype._end = function() {
 	this._save();
 	this._dom.container.parentNode.removeChild(this._dom.container);
+	document.body.style.backgroundImage = "none";
 }
